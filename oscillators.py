@@ -33,36 +33,34 @@ def get_osc_by_type(wave_type, freq, sample_rate, wave_range=None):
     assert False, f'Invalid wave_type: {wave_type}'
 
 
-def get_val(osc, sample_rate):
-    return [next(osc) for i in range(sample_rate)]
+# def get_val(osc, sample_rate):
+#     return [next(osc) for i in range(sample_rate)]
 
+# def get_seq(osc,
+#             sample_rate,
+#             notes=['C4', 'E4', 'G4'],
+#             note_lens=[0.5, 0.5, 0.5]):
+#     samples = []
+#     osc = iter(osc)
+#     for note, note_len in zip(notes, note_lens):
+#         osc.freq = librosa.note_to_hz(note)
+#         for _ in range(int(sr * note_len)):
+#             samples.append(next(osc))
+#     return samples
 
-def get_seq(osc,
-            sample_rate,
-            notes=['C4', 'E4', 'G4'],
-            note_lens=[0.5, 0.5, 0.5]):
-    samples = []
-    osc = iter(osc)
-    for note, note_len in zip(notes, note_lens):
-        osc.freq = librosa.note_to_hz(note)
-        for _ in range(int(sr * note_len)):
-            samples.append(next(osc))
-    return samples
+# def plot_osc(Osc, name=''):
 
+#     fig = plt.figure(figsize=figsize)
+#     f = 8
+#     plt.title(f'{f}Hz {name} wave')
+#     for a, p, c in zip([1.0, 0.9, 0.8, 0.7], [0, 15, 30, 45], colors):
+#         osc = Osc(freq=f, amp=a, phase=p)
+#         iter(osc)
+#         plt.plot(get_val(osc), color=c, label=f"amp:{a}, phase:{p:02}°")
 
-def plot_osc(Osc, name=''):
-
-    fig = plt.figure(figsize=figsize)
-    f = 8
-    plt.title(f'{f}Hz {name} wave')
-    for a, p, c in zip([1.0, 0.9, 0.8, 0.7], [0, 15, 30, 45], colors):
-        osc = Osc(freq=f, amp=a, phase=p)
-        iter(osc)
-        plt.plot(get_val(osc), color=c, label=f"amp:{a}, phase:{p:02}°")
-
-    plt.legend(loc='lower right')
-    plt.show()
-    # fig.savefig(f"{name.lower()}_all.jpg")
+#     plt.legend(loc='lower right')
+#     plt.show()
+#     # fig.savefig(f"{name.lower()}_all.jpg")
 
 
 class Oscillator(ABC):
@@ -411,3 +409,42 @@ def amp_mod(init_amp, env):
 
 def freq_mod(init_freq, env, mod_amt=0.1, sustain_level=0.7):
     return init_freq + ((env - sustain_level) * init_freq * mod_amt)
+
+
+class WaveAdder:
+
+    def __init__(self, *generators, stereo=False):
+        self.generators = generators
+        self.stereo = stereo
+
+    def _mod_channels(self, _val):
+        val = _val
+        if isinstance(_val, (int, float)) and self.stereo:
+            val = (_val, _val)
+        elif isinstance(_val, Iterable) and not self.stereo:
+            val = sum(_val) / len(_val)
+        return val
+
+    def trigger_note_release(self):
+        [
+            gen.trigger_note_release() for gen in self.generators
+            if hasattr(gen, "trigger_note_release")
+        ]
+
+    @property
+    def ended(self):
+        ended = [gen.ended for gen in self.generators if hasattr(gen, "ended")]
+        return all(ended)
+
+    def __iter__(self):
+        [iter(gen) for gen in self.generators]
+        return self
+
+    def __next__(self):
+        vals = [self._mod_channels(next(gen)) for gen in self.generators]
+        if self.stereo:
+            l, r = zip(*vals)
+            val = (sum(l) / len(l), sum(r) / len(r))
+        else:
+            val = sum(vals) / len(vals)
+        return val

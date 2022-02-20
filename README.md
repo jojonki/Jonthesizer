@@ -13,12 +13,4 @@ pip install -r requirements.txt
 - widgets.py
 
 ## TODOs
-- VCO
-    - [ ] Detune
-    - [ ] PORTANETO
-- LFO
-    - [x] Rate
-    - [ ] Pitch
-- Others
-    - [x] Hz tick labels
-    - [x] Cutfoff
+- [ ] Resolve cutoff artifacts

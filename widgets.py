@@ -1,22 +1,18 @@
 import numpy as np
-from pyqtgraph.Qt import QtGui, QtCore
 import numpy as np
-from PyQt6.QtWidgets import QApplication, QRadioButton, QHBoxLayout, QLineEdit, QGridLayout, QCheckBox, QPushButton, QMainWindow, QWidget, QVBoxLayout, QDial, QLabel
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QPalette, QColor
+import PyQt6.QtWidgets as qtw
 import pyqtgraph as pg
 from matplotlib import cm
 
 
-class LabelDial(QVBoxLayout):
+class LabelDial(qtw.QVBoxLayout):
 
     def __init__(self, text, range_min, range_max, value_changed):
-        super(QVBoxLayout, self).__init__()
-        self.label = QLabel(text)
-        self.dial = QDial()
+        super(qtw.QVBoxLayout, self).__init__()
+        self.label = qtw.QLabel(text)
+        self.dial = qtw.QDial()
         self.dial.setRange(range_min, range_max)
         self.dial.valueChanged.connect(value_changed)
-        dial_label = QLabel()
         self.addWidget(self.label)
         self.addWidget(self.dial)
 

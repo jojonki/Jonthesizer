@@ -1,4 +1,4 @@
-from pyqtgraph.Qt import QtGui, QtCore
+from pyqtgraph.Qt import QtCore
 import time
 import pygame
 

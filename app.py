@@ -8,8 +8,7 @@ import pyqtgraph as pg
 from pygame import midi
 import pyqtgraph as pg
 import sys
-from sounds import WaveAdder
-from oscillators import get_osc_by_type, ModulatedVolume, Chain, ModulatedOscillator, amp_mod, freq_mod
+from oscillators import get_osc_by_type, WaveAdder, ModulatedVolume, Chain, ModulatedOscillator, amp_mod, freq_mod
 from envelope import Envelope
 from widgets import LabelDial, WaveWidget, SpectrogramWidget, ADSRWidget
 from midi import MidiThread, initialize_midi, ProgramSignals
