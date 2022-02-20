@@ -5,7 +5,6 @@ import numpy as np
 import pyaudio
 import PyQt6.QtWidgets as qtw
 import pyqtgraph as pg
-import scipy.signal
 from pygame import midi
 from PyQt6.QtCore import Qt
 from pyqtgraph.Qt import QtCore
