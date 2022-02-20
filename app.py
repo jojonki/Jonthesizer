@@ -66,26 +66,6 @@ class Window(qtw.QMainWindow):
 
         self.show()
 
-    def buffer_update(self):
-        if not self.osc:
-            return
-
-        buf = np.array([next(self.osc) for _ in range(buf_size)])
-        buf = lpf(wave=buf,
-                  sample_rate=RATE,
-                  cutoff=self.cutoff,
-                  order=5,
-                  lpf_intensity=self.lpf_intensity)
-
-        samples = np.int16([b * 32767 for b in buf]).tobytes()
-        self.stream.write(samples)
-
-        if buf.ndim == 2:  # stereo
-            buf = buf[:, 0]
-
-        self.wave_plot.curve.setData(buf)
-        self.spec_plot.update(buf)
-
     def setup_midi(self):
         midi_in = initialize_midi()
         # Instantiate a signal
@@ -197,6 +177,23 @@ class Window(qtw.QMainWindow):
 
         self.setCentralWidget(widget)
         pg.setConfigOptions(antialias=True)
+
+    def buffer_update(self):
+        if not self.osc:
+            return
+
+        buf = np.array([next(self.osc) for _ in range(buf_size)])
+        buf = lpf(wave=buf,
+                  sample_rate=RATE,
+                  cutoff=self.cutoff,
+                  order=5,
+                  lpf_intensity=self.lpf_intensity)
+
+        samples = np.int16([b * 32767 for b in buf]).tobytes()
+        self.stream.write(samples)
+
+        self.wave_plot.curve.setData(buf)
+        self.spec_plot.update(buf)
 
     def dial_adsr_update(self):
         for adsr_type, widget in self.adsr.items():
