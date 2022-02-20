@@ -1,5 +1,4 @@
 import numpy as np
-import numpy as np
 import PyQt6.QtWidgets as qtw
 import pyqtgraph as pg
 from matplotlib import cm

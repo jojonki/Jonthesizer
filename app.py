@@ -1,20 +1,20 @@
+import signal
+import sys
+
 import numpy as np
 import pyaudio
-from pyqtgraph.Qt import QtCore
-import numpy as np
 import PyQt6.QtWidgets as qtw
-from PyQt6.QtCore import Qt
 import pyqtgraph as pg
-from pygame import midi
-import pyqtgraph as pg
-import sys
-from oscillators import get_osc_by_type, WaveAdder, ModulatedVolume, Chain, ModulatedOscillator, amp_mod, freq_mod
-from envelope import Envelope
-from widgets import LabelDial, WaveWidget, SpectrogramWidget, ADSRWidget
-from midi import MidiThread, initialize_midi, ProgramSignals
-import signal
-
 import scipy.signal
+from pygame import midi
+from PyQt6.QtCore import Qt
+from pyqtgraph.Qt import QtCore
+
+from envelope import Envelope
+from midi import MidiThread, ProgramSignals, initialize_midi
+from oscillators import (Chain, ModulatedOscillator, ModulatedVolume,
+                         WaveAdder, amp_mod, freq_mod, get_osc_by_type)
+from widgets import ADSRWidget, LabelDial, SpectrogramWidget, WaveWidget
 
 
 def lpf(wave, sample_rate, cutoff, order, lpf_intensity=1.0):

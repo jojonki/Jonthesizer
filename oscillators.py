@@ -1,17 +1,13 @@
+"""These oscillators and modulators are design at the following blog.
+Making A Synth With Python
+https://python.plainenglish.io/making-a-synth-with-python-oscillators-2cb8e68e9c3b
+"""
 import math
 from abc import ABC, abstractmethod
-import librosa
-from envelope import Envelope
-
-import matplotlib.pyplot as plt
 from collections.abc import Iterable
-
-figsize = (25, 6.25)
-colors = "#323031", "#308E91", "#34369D", "#5E2A7E", "#5E2A7E", "#6F3384"
 
 
 def get_osc_by_type(wave_type, freq, sample_rate, wave_range=None):
-    # sample_rate = RATE
     if wave_range is None:
         wave_range = (-1, 1)
     if wave_type == 'sine':
@@ -31,36 +27,6 @@ def get_osc_by_type(wave_type, freq, sample_rate, wave_range=None):
                                   wave_range=wave_range,
                                   sample_rate=sample_rate)
     assert False, f'Invalid wave_type: {wave_type}'
-
-
-# def get_val(osc, sample_rate):
-#     return [next(osc) for i in range(sample_rate)]
-
-# def get_seq(osc,
-#             sample_rate,
-#             notes=['C4', 'E4', 'G4'],
-#             note_lens=[0.5, 0.5, 0.5]):
-#     samples = []
-#     osc = iter(osc)
-#     for note, note_len in zip(notes, note_lens):
-#         osc.freq = librosa.note_to_hz(note)
-#         for _ in range(int(sr * note_len)):
-#             samples.append(next(osc))
-#     return samples
-
-# def plot_osc(Osc, name=''):
-
-#     fig = plt.figure(figsize=figsize)
-#     f = 8
-#     plt.title(f'{f}Hz {name} wave')
-#     for a, p, c in zip([1.0, 0.9, 0.8, 0.7], [0, 15, 30, 45], colors):
-#         osc = Osc(freq=f, amp=a, phase=p)
-#         iter(osc)
-#         plt.plot(get_val(osc), color=c, label=f"amp:{a}, phase:{p:02}°")
-
-#     plt.legend(loc='lower right')
-#     plt.show()
-#     # fig.savefig(f"{name.lower()}_all.jpg")
 
 
 class Oscillator(ABC):
