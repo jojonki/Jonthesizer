@@ -5,6 +5,7 @@ https://python.plainenglish.io/making-a-synth-with-python-oscillators-2cb8e68e9c
 import math
 from abc import ABC, abstractmethod
 from collections.abc import Iterable
+import scipy.signal
 
 
 def get_osc_by_type(wave_type, freq, sample_rate, wave_range=None):
@@ -403,3 +404,16 @@ class WaveAdder:
         else:
             val = sum(vals) / len(vals)
         return val
+
+
+def lowpass_filter(wave, sample_rate, cutoff, order, lpf_intensity=1.0):
+    assert 0 < lpf_intensity <= 1.0
+    if cutoff <= 0:
+        return wave
+    nyq = sample_rate * 0.5
+    normal_cutoff = cutoff / nyq
+    b, a = scipy.signal.butter(order, normal_cutoff, btype='low')
+    wave2 = scipy.signal.lfilter(b, a, wave)
+    wave = lpf_intensity * wave2 + (1.0 - lpf_intensity) * wave
+
+    return wave

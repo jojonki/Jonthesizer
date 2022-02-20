@@ -13,29 +13,14 @@ from pyqtgraph.Qt import QtCore
 from envelope import Envelope
 from midi import MidiThread, ProgramSignals, initialize_midi
 from oscillators import (Chain, ModulatedOscillator, ModulatedVolume,
-                         WaveAdder, amp_mod, freq_mod, get_osc_by_type)
+                         WaveAdder, amp_mod, freq_mod, get_osc_by_type,
+                         lowpass_filter)
 from widgets import ADSRWidget, LabelDial, SpectrogramWidget, WaveWidget
-
-
-def lpf(wave, sample_rate, cutoff, order, lpf_intensity=1.0):
-    assert 0 < lpf_intensity <= 1.0
-    if cutoff <= 0:
-        return wave
-    nyq = sample_rate * 0.5
-    normal_cutoff = cutoff / nyq
-    b, a = scipy.signal.butter(order, normal_cutoff, btype='low')
-    wave2 = scipy.signal.lfilter(b, a, wave)
-    wave = lpf_intensity * wave2 + (1.0 - lpf_intensity) * wave
-
-    return wave
-
 
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 
 RATE = 22_050
 buf_size = 256
-pitch = 440
-stereo = False
 
 
 class Window(qtw.QMainWindow):
@@ -54,13 +39,13 @@ class Window(qtw.QMainWindow):
         self.build_ui_components()
 
         self.stream = pyaudio.PyAudio().open(rate=RATE,
-                                             channels=2 if stereo else 1,
+                                             channels=1,
                                              format=pyaudio.paInt16,
                                              output=True,
                                              frames_per_buffer=buf_size)
         self.osc = None
         self.timer = QtCore.QTimer()
-        self.timer.timeout.connect(self.buffer_update)
+        self.timer.timeout.connect(self.update_buffer)
         print('timer', buf_size / RATE * 1000)
         self.timer.start(buf_size / RATE * 1000)
 
@@ -134,11 +119,11 @@ class Window(qtw.QMainWindow):
             label_dial = LabelDial(text=adsr_type,
                                    range_min=1,
                                    range_max=1000,
-                                   value_changed=self.dial_adsr_update)
+                                   value_changed=self.update_adsr_dial)
             label_dial.dial.setValue(int(init_value))
             self.adsr[adsr_type] = label_dial
             layout_dials.addLayout(self.adsr[adsr_type])
-        self.dial_adsr_update()
+        self.update_adsr_dial()
 
         # LFO
         self.lfo = {}
@@ -147,12 +132,12 @@ class Window(qtw.QMainWindow):
             label_dial = LabelDial(text=lfo_type,
                                    range_min=range_min,
                                    range_max=range_max,
-                                   value_changed=self.dial_lfo_update)
+                                   value_changed=self.update_lfo_dial)
             self.lfo[lfo_type] = label_dial
             label_dial.dial.setValue(init_value)
             self.lfo[adsr_type] = label_dial
             layout_dials.addLayout(self.lfo[lfo_type])
-        self.dial_lfo_update()
+        self.update_lfo_dial()
 
         # low pass
         self.lpf = {}
@@ -163,7 +148,7 @@ class Window(qtw.QMainWindow):
             label_dial = LabelDial(text='Filter',
                                    range_min=range_min,
                                    range_max=range_max,
-                                   value_changed=self.dial_lpf_update)
+                                   value_changed=self.update_lpf_dial)
             self.lpf[lpf_type] = label_dial
             label_dial.dial.setValue(init_value)
             layout_dials.addLayout(label_dial)
@@ -178,16 +163,16 @@ class Window(qtw.QMainWindow):
         self.setCentralWidget(widget)
         pg.setConfigOptions(antialias=True)
 
-    def buffer_update(self):
+    def update_buffer(self):
         if not self.osc:
             return
 
         buf = np.array([next(self.osc) for _ in range(buf_size)])
-        buf = lpf(wave=buf,
-                  sample_rate=RATE,
-                  cutoff=self.cutoff,
-                  order=5,
-                  lpf_intensity=self.lpf_intensity)
+        buf = lowpass_filter(wave=buf,
+                             sample_rate=RATE,
+                             cutoff=self.cutoff,
+                             order=5,
+                             lpf_intensity=self.lpf_intensity)
 
         samples = np.int16([b * 32767 for b in buf]).tobytes()
         self.stream.write(samples)
@@ -195,7 +180,7 @@ class Window(qtw.QMainWindow):
         self.wave_plot.curve.setData(buf)
         self.spec_plot.update(buf)
 
-    def dial_adsr_update(self):
+    def update_adsr_dial(self):
         for adsr_type, widget in self.adsr.items():
             val = widget.dial.value()
             if adsr_type == 'Attack':
@@ -225,18 +210,20 @@ class Window(qtw.QMainWindow):
         except AttributeError as e:
             pass
 
-    def dial_lfo_update(self):
+    def update_lfo_dial(self):
         for lfo_type, widget in self.lfo.items():
             val = widget.dial.value()
             if lfo_type == 'LFO Freq':
                 self.lfo_freq = val
                 widget.label.setText(f'LFO Freq\n{val} Hz')
 
-    def dial_lpf_update(self):
+    def update_lpf_dial(self):
         for lpf_type, widget in self.lpf.items():
             val = widget.dial.value()
             if lpf_type == 'Cutoff':
                 self.cutoff = val
+                if val == 0:
+                    val = '-'
                 widget.label.setText(f'Cutoff\n{val} Hz')
             elif lpf_type == 'LPF Intensity':
                 self.lpf_intensity = val / 100
